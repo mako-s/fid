@@ -84,18 +84,21 @@ class fid:
                 rank_value = large_rank_value + small_rank_value + self.auxiliary_data[2][i][0]
                 return rank_value
     
-    def select1(self, index):
-        if index > len(self.bit_s):
+    def select1(self, value):
+        if value > len(self.bit_s):
             print '*Oops!*'
             sys.exit()
         for i in range(len(self.auxiliary_data[0])):
-            if index < self.auxiliary_data[0][i][1]:
+            if value <= self.auxiliary_data[0][i][1]:
                 break
- 
-        bit_tmp = index - self.auxiliary_data[0][i-1][1]
+        
+        if value > self.auxiliary_data[0][i][1]:
+            print '*Out of range value*'
+            return 
+        
+        bit_tmp = value - self.auxiliary_data[0][i-1][1]
         if bit_tmp == 0:
             return self.auxiliary_data[0][i-1][0]
- 
         s_range = (i-1) * len(self.auxiliary_data[1])/self.small_block_length
     
         for j in range(s_range,s_range + len(self.auxiliary_data[1])/self.small_block_length):
@@ -105,12 +108,55 @@ class fid:
                 break
         
         small_select_value = bit_tmp - self.auxiliary_data[1][j-1][1] 
-    
-        baz = 0     
-        for select_value in range(self.auxiliary_data[1][j-1][0],self.auxiliary_data[1][j-1][0]+self.small_block_length):
+        baz = 0
+
+        for select_value in range(self.auxiliary_data[1][j-1][0]+1,self.auxiliary_data[1][j-1][0]+self.small_block_length+1):
             baz = baz + self.bit_s[select_value]
             if baz == small_select_value:
                 select_value = select_value + 1
+                return select_value 
+    
+    def rank0(self, index):
+        if index > len(self.bit_s):
+            print '*Oops!*'
+            sys.exit()
+        rank0_value = index - fid.rank1(self,index)
+        return rank0_value
+        
+    def select0(self, value):
+        if value > len(self.bit_s):
+            print '*Oops!*'
+            sys.exit()
+        index = value
+        for i in range(len(self.auxiliary_data[0])):
+            if index < self.auxiliary_data[0][i][0] - self.auxiliary_data[0][i][1]:
+                break
+        
+        if value > self.auxiliary_data[0][i][1]:
+            print '*Out of range value*'
+            return   
+        
+        bit_tmp0 = value - (self.auxiliary_data[0][i-1][0] - self.auxiliary_data[0][i-1][1])
+        if bit_tmp0 == 0:
+            return self.auxiliary_data[0][i-1][0]
+        
+        s_range = (i-1) * len(self.auxiliary_data[1])/self.small_block_length
+        hoge = self.auxiliary_data[1][s_range][0]
+        
+        for j in range(s_range,s_range + len(self.auxiliary_data[1])/self.small_block_length):
+            if bit_tmp0 <= (self.auxiliary_data[1][j][0] - hoge) - self.auxiliary_data[1][j][1]:
+                if s_range == self.auxiliary_data[1][j-1][0]:
+                    small_select_value = bit_tmp0 - ((self.auxiliary_data[1][j-1][0] + 1 - hoge) - self.auxiliary_data[1][j-1][1])
+                break
+            else:
+                small_select_value = bit_tmp0 - ((self.auxiliary_data[1][j][0] - hoge) - self.auxiliary_data[1][j][1])    
+        
+        baz = 0
+        for select_value in range(self.auxiliary_data[1][j-1][0]+1,self.auxiliary_data[1][j-1][0]+self.small_block_length+1):
+            baz = baz + (self.bit_s[select_value] ^ 1)
+            if baz == small_select_value:
+                select_value = select_value + 1
+                print 'select_value = %s' % select_value
                 return select_value 
         
 def main():
@@ -120,8 +166,10 @@ def main():
 
     #print bit_s    
     f = fid(bit_s)
-    f.rank1(70)
-    f.select1(70)
-
+    #f.rank1(700)
+    #f.select1(20)
+    f.rank0(70)
+    #f.select0(70)
+    
 if __name__ == "__main__":
     main()
